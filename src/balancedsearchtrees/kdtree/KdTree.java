@@ -131,11 +131,41 @@ public class KdTree {
 
 
     public Point2D nearest(Point2D p) {
-
-        return p;
+        if (p == null) {
+            throw new NullPointerException();
+        }
+        if (isEmpty()) {
+            return null;
+        }
+        return nearest(root, p, root.value);
     }   // a nearest neighbor in the set to point p; null if the set is empty
 
+    public Point2D nearest(Node root, Point2D query, Point2D nearestPoint) {
+        if (root == null) {
+            return nearestPoint;
+        }
+        if (nearestPoint == null ||
+                query.distanceSquaredTo(root.value) < query.distanceSquaredTo(nearestPoint)) {
+            nearestPoint = root.value;
+        }
+        double coord = root.coordType ? query.x() : query.y();
+        double dist = (coord - root.key)*(coord-root.key);
+        //go one way
+        if (coord < root.key) {
+            nearest(root.left, query, nearestPoint);
+            //todo change condition
+            if (query.distanceSquaredTo(nearestPoint) > dist) {
+                nearestPoint = nearest(root.right, query, nearestPoint);
+            }
 
+        } else {
+            nearest(root.right, query, nearestPoint);
+            if (query.distanceSquaredTo(nearestPoint) > dist) {
+                nearestPoint = nearest(root.left, query, nearestPoint);
+            }
+        }
+        return nearestPoint;
+    }
 
     private class Node {
         private double key;
