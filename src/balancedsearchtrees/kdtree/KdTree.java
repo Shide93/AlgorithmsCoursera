@@ -1,9 +1,6 @@
 package balancedsearchtrees.kdtree;
-
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
-import edu.princeton.cs.algs4.Stack;
 import edu.princeton.cs.algs4.StdDraw;
 
 import java.util.ArrayList;
@@ -79,26 +76,60 @@ public class KdTree {
     }
 
     public void draw() {
-        draw(root, 0, 1, true);
+        draw(root, 0, 1, 1);
     }     // draw all points to standard draw
 
-    private void draw(Node root, double from, double to, boolean coordType) {
+    private void draw(Node root, double from, double prevX, double prevY) {
         if (root == null) return;
         StdDraw.setPenColor(StdDraw.BLACK);
         StdDraw.setPenRadius(0.01);
         root.value.draw();
+//        StdDraw.text(root.value.x(), root.value.y(), root.value.toString());
 
         StdDraw.setPenRadius();
         if (root.coordType) {
             StdDraw.setPenColor(StdDraw.RED);
-            StdDraw.line(root.key, from, root.key, to);
+            if (root.value.y() >= from) {
+                if (prevY > from) {
+                    StdDraw.line(root.key, from, root.key, prevY);
+                } else {
+                    StdDraw.line(root.key, from, root.key, 1);
+                }
+            } else {
+                if (prevY < from) {
+                    StdDraw.line(root.key, from, root.key, prevY);
+                } else {
+                    StdDraw.line(root.key, from, root.key, 0);
+                }
+            }
+            prevY = from;
         } else {
             StdDraw.setPenColor(StdDraw.BLUE);
-            StdDraw.line(from, root.key, to, root.key);
-        }
+            if (root.value.x() >= from) {
+                if (prevX > from) {
+                    StdDraw.line(from, root.key, prevX, root.key);
+                } else {
+                    StdDraw.line(from, root.key, 1, root.key);
+                }
+            } else {
+                if (prevX < from) {
+                    StdDraw.line(from, root.key, prevX, root.key);
+                } else {
+                    StdDraw.line(from, root.key, 0, root.key);
+                }
 
-        draw(root.left, 0, root.key, coordType);
-        draw(root.right, root.key, 1, coordType);
+            }
+            prevX = from;       //TODO: check corectness
+        }
+        draw(root.left, root.key, prevX, prevY);
+        draw(root.right, root.key, prevX, prevY);
+
+    }
+    private double findMinBorder(Node node, Node targetNode, double from) {
+        if (targetNode.coordType != node.coordType) {
+
+        }//TODO: SCAN FROM ROOT AND FIND BORDER COORDINATES
+        return 0;
     }
 
     public Iterable<Point2D> range(RectHV rect) {
@@ -148,19 +179,18 @@ public class KdTree {
                 query.distanceSquaredTo(root.value) < query.distanceSquaredTo(nearestPoint)) {
             nearestPoint = root.value;
         }
-        double coord = root.coordType ? query.x() : query.y();
-        double dist = (coord - root.key)*(coord-root.key);
-        //go one way
-        if (coord < root.key) {
-            nearest(root.left, query, nearestPoint);
-            //todo change condition
-            if (query.distanceSquaredTo(nearestPoint) > dist) {
+        double queryCoord = root.coordType ? query.x() : query.y();
+        double distanceToLine = (queryCoord - root.key) * (queryCoord - root.key);
+
+        if (queryCoord < root.key) {
+            nearestPoint = nearest(root.left, query, nearestPoint);
+            if (query.distanceSquaredTo(nearestPoint) > distanceToLine) {
                 nearestPoint = nearest(root.right, query, nearestPoint);
             }
 
         } else {
-            nearest(root.right, query, nearestPoint);
-            if (query.distanceSquaredTo(nearestPoint) > dist) {
+            nearestPoint = nearest(root.right, query, nearestPoint);
+            if (query.distanceSquaredTo(nearestPoint) > distanceToLine) {
                 nearestPoint = nearest(root.left, query, nearestPoint);
             }
         }
